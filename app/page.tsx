@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function LandingPage() {
@@ -10,6 +9,19 @@ export default function LandingPage() {
   const supabase = createClient();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setIsSigningIn(true);
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+          `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -50,12 +62,13 @@ export default function LandingPage() {
                 CollegeLife
               </span>
             </h1>
-            <Link
-              href="/auth/login"
-              className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-bold hover:shadow-lg hover:shadow-primary/50 transition-smooth"
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isSigningIn}
+              className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-bold hover:shadow-lg hover:shadow-primary/50 transition-smooth disabled:opacity-60"
             >
-              Sign In
-            </Link>
+              {isSigningIn ? 'Signing in...' : 'Sign In'}
+            </button>
           </nav>
 
           {/* Hero Section */}
@@ -77,13 +90,17 @@ export default function LandingPage() {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Link
-                  href="/auth/login"
-                  className="px-8 py-3.5 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-lg font-bold hover:shadow-xl hover:shadow-primary/50 transition-smooth"
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isSigningIn}
+                  className="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-lg font-bold hover:shadow-xl hover:shadow-primary/50 transition-smooth disabled:opacity-60"
                 >
-                  Get Started
-                </Link>
-                <button className="px-8 py-3.5 border-2 border-primary/60 text-white rounded-lg font-bold hover:border-primary hover:bg-primary/5 transition-smooth">
+                  {isSigningIn ? 'Signing in...' : 'Get Started'}
+                </button>
+                <button 
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-8 py-3.5 border-2 border-primary/60 text-white rounded-lg font-bold hover:border-primary hover:bg-primary/5 transition-smooth"
+                >
                   How It Works
                 </button>
               </div>
@@ -164,37 +181,55 @@ export default function LandingPage() {
           </div>
 
           {/* How It Works */}
-          <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border border-white/10 rounded-2xl p-12 mb-24 backdrop-blur-xl">
+          <div id="how-it-works" className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-primary/30 rounded-2xl p-12 mb-24 scroll-mt-24 backdrop-blur-xl">
             <div className="max-w-3xl">
               <h3 className="text-3xl font-bold text-white mb-8">How It Works</h3>
-              <div className="space-y-6">
-                <div className="flex gap-4 items-start">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+              <div className="space-y-8">
+                <div className="flex gap-5 items-start">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold flex-shrink-0 text-white">
                     1
                   </div>
                   <div>
                     <h4 className="text-lg font-bold text-white mb-1">Sign in with Google</h4>
-                    <p className="text-muted-foreground">Quick and secure authentication in seconds</p>
+                    <p className="text-gray-300">Quick and secure — no passwords needed</p>
                   </div>
                 </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-10 h-10 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="flex gap-5 items-start">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold flex-shrink-0 text-white">
                     2
                   </div>
                   <div>
                     <h4 className="text-lg font-bold text-white mb-1">Generate invite codes</h4>
-                    <p className="text-muted-foreground">Create codes to share with family and friends</p>
+                    <p className="text-gray-300">Create personal codes to share with family and friends</p>
                   </div>
                 </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-10 h-10 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="flex gap-5 items-start">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center font-bold flex-shrink-0 text-white">
                     3
                   </div>
                   <div>
                     <h4 className="text-lg font-bold text-white mb-1">They join and stay connected</h4>
-                    <p className="text-muted-foreground">They sign in, enter your code, and see all your updates</p>
+                    <p className="text-gray-300">They sign in with Google, enter your code, and instantly see all your updates</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Sign in CTA inline */}
+              <div className="mt-10 pt-8 border-t border-slate-700">
+                <p className="text-white font-semibold mb-4">Ready? Start here:</p>
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isSigningIn}
+                  className="flex items-center gap-3 px-6 py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-xl font-semibold transition-smooth hover:shadow-lg disabled:opacity-60"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  {isSigningIn ? 'Redirecting...' : 'Sign in with Google'}
+                </button>
               </div>
             </div>
           </div>
@@ -205,12 +240,19 @@ export default function LandingPage() {
             <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
               Start sharing your college journey with the people who care about you most.
             </p>
-            <Link
-              href="/auth/login"
-              className="inline-block px-10 py-4 bg-gradient-to-r from-primary via-secondary to-accent text-primary-foreground rounded-lg font-bold hover:shadow-2xl hover:shadow-primary/50 transition-smooth text-lg"
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isSigningIn}
+              className="inline-flex items-center gap-3 px-10 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-xl font-bold hover:shadow-2xl transition-smooth text-lg disabled:opacity-60"
             >
-              Sign In Now
-            </Link>
+              <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              {isSigningIn ? 'Redirecting...' : 'Sign in with Google'}
+            </button>
           </div>
         </div>
       </div>
