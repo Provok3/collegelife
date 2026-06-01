@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile } from 'lucide-react'
+import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface Photo {
@@ -112,7 +111,6 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
     )
 
     if (existingReaction) {
-      // Remove reaction
       await supabase
         .from('photo_reactions')
         .delete()
@@ -128,7 +126,6 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
         return p
       }))
     } else {
-      // Add reaction
       const { data } = await supabase
         .from('photo_reactions')
         .insert({
@@ -152,22 +149,20 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
 
   if (photos.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Camera className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Photos Yet</h3>
-          <p className="text-muted-foreground">
-            {isOwner 
-              ? 'Upload your first photo to share with your family!' 
-              : 'No photos have been shared yet. Check back soon!'}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <Camera className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+        <h3 className="text-xl font-bold text-white mb-2">No Photos Yet</h3>
+        <p className="text-muted-foreground">
+          {isOwner 
+            ? 'Upload your first photo to share with your family!' 
+            : 'No photos have been shared yet. Check back soon!'}
+        </p>
+      </div>
     )
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-max">
       {photos.map((photo) => {
         const isExpanded = expandedPhoto === photo.id
         const reactionCounts = EMOJI_OPTIONS.map(opt => ({
@@ -177,36 +172,42 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
         }))
 
         return (
-          <Card key={photo.id} className="overflow-hidden">
-            <div className="relative aspect-square">
+          <div
+            key={photo.id}
+            className="group bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl hover:border-white/20 transition-smooth hover:shadow-xl hover:shadow-primary/10"
+          >
+            {/* Image */}
+            <div className="relative aspect-square overflow-hidden bg-slate-900">
               <img
                 src={`/api/photos/file?pathname=${encodeURIComponent(photo.blob_pathname)}`}
                 alt={photo.caption || 'Photo'}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               {isOwner && (
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   onClick={() => handleDelete(photo.id)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               )}
             </div>
-            <CardContent className="p-4 space-y-3">
+
+            {/* Content */}
+            <div className="p-5 space-y-4">
               {/* Caption */}
               {photo.caption && (
-                <p className="text-sm">{photo.caption}</p>
+                <p className="text-sm text-white leading-relaxed">{photo.caption}</p>
               )}
 
               {/* Owner info for viewers */}
               {!isOwner && photo.owner && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground pb-2 border-b border-white/10">
                   <Avatar className="w-5 h-5">
                     <AvatarImage src={photo.owner.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-xs bg-primary/20 text-primary">
                       {(photo.owner.display_name || 'S').slice(0, 1)}
                     </AvatarFallback>
                   </Avatar>
@@ -214,55 +215,56 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
                 </div>
               )}
 
-              {/* Timestamp */}
-              <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(photo.created_at), { addSuffix: true })}
-              </p>
-
-              {/* Reactions */}
-              <div className="flex gap-1 flex-wrap">
+              {/* Reactions Grid */}
+              <div className="grid grid-cols-4 gap-1">
                 {reactionCounts.map(({ emoji, icon: Icon, label, count, hasReacted }) => (
-                  <Button
+                  <button
                     key={emoji}
-                    variant={hasReacted ? 'default' : 'outline'}
-                    size="sm"
-                    className="h-8 px-2 gap-1"
                     onClick={() => handleReaction(photo.id, emoji)}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-smooth ${
+                      hasReacted
+                        ? 'bg-primary/30 border border-primary/60 text-primary'
+                        : 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20'
+                    }`}
+                    title={label}
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {count > 0 && <span className="text-xs">{count}</span>}
-                  </Button>
+                    <Icon className="w-4 h-4" />
+                    {count > 0 && <span className="text-xs mt-0.5">{count}</span>}
+                  </button>
                 ))}
               </div>
 
-              {/* Comments toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-muted-foreground"
+              {/* Comments Button */}
+              <button
                 onClick={() => setExpandedPhoto(isExpanded ? null : photo.id)}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-smooth text-sm text-muted-foreground hover:text-white font-medium"
               >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                {photo.comments.length} comment{photo.comments.length !== 1 ? 's' : ''}
-              </Button>
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  {photo.comments.length} comment{photo.comments.length !== 1 ? 's' : ''}
+                </span>
+              </button>
 
               {/* Comments section */}
               {isExpanded && (
-                <div className="space-y-3 pt-2 border-t">
+                <div className="space-y-3 pt-3 border-t border-white/10">
                   {photo.comments.map((comment) => (
                     <div key={comment.id} className="flex gap-2">
-                      <Avatar className="w-6 h-6">
+                      <Avatar className="w-7 h-7 flex-shrink-0">
                         <AvatarImage src={comment.user.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-xs bg-secondary/20 text-secondary">
                           {(comment.user.display_name || 'U').slice(0, 1)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{comment.user.display_name || 'User'}</span>{' '}
-                          {comment.content}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-2.5">
+                          <p className="text-sm">
+                            <span className="font-semibold text-white">{comment.user.display_name || 'User'}</span>
+                            <br />
+                            <span className="text-muted-foreground">{comment.content}</span>
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                         </p>
                       </div>
@@ -270,9 +272,9 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
                   ))}
 
                   {/* Add comment */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-2 border-t border-white/10">
                     <Input
-                      placeholder="Add a comment..."
+                      placeholder="Say something..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       onKeyDown={(e) => {
@@ -281,20 +283,26 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
                           handleAddComment(photo.id)
                         }
                       }}
-                      className="text-sm"
+                      className="text-sm bg-white/5 border-white/10 text-white placeholder:text-muted-foreground"
                     />
                     <Button
                       size="icon"
                       onClick={() => handleAddComment(photo.id)}
                       disabled={!newComment.trim() || isSubmitting}
+                      className="flex-shrink-0 bg-primary hover:bg-primary/90"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+
+              {/* Timestamp */}
+              <p className="text-xs text-muted-foreground pt-1">
+                {formatDistanceToNow(new Date(photo.created_at), { addSuffix: true })}
+              </p>
+            </div>
+          </div>
         )
       })}
     </div>

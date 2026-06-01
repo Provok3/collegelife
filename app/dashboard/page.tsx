@@ -1,17 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Camera, MessageCircle, Calendar, Users, ArrowRight } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { Camera, MessageCircle, Calendar, Users, Settings, Plus } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  if (!user) return null
+  if (!user) {
+    redirect('/auth/login')
+  }
 
-  // Get profile to check if owner
+  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -26,6 +27,7 @@ export default async function DashboardPage() {
     .limit(1)
 
   const isOwner = profile?.is_owner || (ownerConnections && ownerConnections.length > 0)
+  const displayName = profile?.display_name || user.email?.split('@')[0] || 'there'
 
   // Get recent data based on role
   let recentPhotos = []
@@ -34,13 +36,12 @@ export default async function DashboardPage() {
   let connectionCount = 0
 
   if (isOwner) {
-    // Owner sees their own content
     const { data: photos } = await supabase
       .from('photos')
       .select('*')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(4)
+      .limit(6)
     recentPhotos = photos || []
 
     const { data: status } = await supabase
@@ -67,7 +68,6 @@ export default async function DashboardPage() {
       .eq('owner_id', user.id)
     connectionCount = count || 0
   } else {
-    // Viewer sees content from connected owners
     const { data: connections } = await supabase
       .from('connections')
       .select('owner_id')
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
         .select('*')
         .in('owner_id', ownerIds)
         .order('created_at', { ascending: false })
-        .limit(4)
+        .limit(6)
       recentPhotos = photos || []
 
       const { data: status } = await supabase
@@ -104,170 +104,204 @@ export default async function DashboardPage() {
     }
   }
 
-  const displayName = profile?.display_name || user.email?.split('@')[0] || 'there'
-
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Welcome back, {displayName}!</h1>
-        <p className="text-muted-foreground mt-1">
-          {isOwner 
-            ? "Here's what's happening with your CollegeLife" 
-            : "Here's the latest updates from your student"}
-        </p>
+      {/* Welcome Header with Gradient */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/5 border border-white/10 p-8 backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-black text-white">
+            Hey {displayName}! 👋
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            {isOwner 
+              ? 'Stay connected with your loved ones' 
+              : 'Checking in on your student today'}
+          </p>
+        </div>
       </div>
 
-      {/* Quick Actions for Owner */}
+      {/* Quick Actions Grid - Bento Style */}
       {isOwner && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Link href="/dashboard/photos">
-              <Camera className="w-6 h-6 text-primary" />
-              <span>Add Photo</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Link href="/dashboard/status">
-              <MessageCircle className="w-6 h-6 text-accent-foreground" />
-              <span>Update Status</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Link href="/dashboard/schedule">
-              <Calendar className="w-6 h-6 text-chart-3" />
-              <span>Add Event</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Link href="/dashboard/invites">
-              <Users className="w-6 h-6 text-chart-5" />
-              <span>Invite People</span>
-            </Link>
-          </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link 
+            href="/dashboard/photos"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/30 p-6 hover:border-primary/60 transition-smooth hover:shadow-lg hover:shadow-primary/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/30 flex items-center justify-center group-hover:scale-110 transition-smooth">
+                <Camera className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">Photos</p>
+                <p className="text-xs text-muted-foreground">Share moments</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link 
+            href="/dashboard/status"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-secondary/15 to-secondary/5 border border-secondary/30 p-6 hover:border-secondary/60 transition-smooth hover:shadow-lg hover:shadow-secondary/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary/30 flex items-center justify-center group-hover:scale-110 transition-smooth">
+                <MessageCircle className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">Status</p>
+                <p className="text-xs text-muted-foreground">How are you?</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link 
+            href="/dashboard/schedule"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/30 p-6 hover:border-accent/60 transition-smooth hover:shadow-lg hover:shadow-accent/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-accent/30 flex items-center justify-center group-hover:scale-110 transition-smooth">
+                <Calendar className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">Schedule</p>
+                <p className="text-xs text-muted-foreground">Add events</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link 
+            href="/dashboard/invites"
+            className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-chart-1/15 to-chart-1/5 border border-chart-1/30 p-6 hover:border-chart-1/60 transition-smooth hover:shadow-lg hover:shadow-chart-1/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-chart-1/30 flex items-center justify-center group-hover:scale-110 transition-smooth">
+                <Users className="w-5 h-5 text-chart-1" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">Invite</p>
+                <p className="text-xs text-muted-foreground">Share codes</p>
+              </div>
+            </div>
+          </Link>
         </div>
       )}
 
-      {/* Stats Cards for Owner */}
+      {/* Stats Cards - Bento */}
       {isOwner && (
-        <div className="grid md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Photos Shared</CardDescription>
-              <CardTitle className="text-3xl">{recentPhotos.length}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Connected People</CardDescription>
-              <CardTitle className="text-3xl">{connectionCount}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Upcoming Events</CardDescription>
-              <CardTitle className="text-3xl">{upcomingSchedule.length}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Current Mood</CardDescription>
-              <CardTitle className="text-3xl">{recentStatus?.mood || '—'}</CardTitle>
-            </CardHeader>
-          </Card>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm font-medium">Connected</p>
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <p className="text-3xl font-black text-white">{connectionCount}</p>
+            <p className="text-xs text-muted-foreground mt-2">people staying connected</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm font-medium">Shared</p>
+              <Camera className="w-4 h-4 text-secondary" />
+            </div>
+            <p className="text-3xl font-black text-white">{recentPhotos.length}</p>
+            <p className="text-xs text-muted-foreground mt-2">photos and stories</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm font-medium">Upcoming</p>
+              <Calendar className="w-4 h-4 text-accent" />
+            </div>
+            <p className="text-3xl font-black text-white">{upcomingSchedule.length}</p>
+            <p className="text-xs text-muted-foreground mt-2">events coming up</p>
+          </div>
         </div>
       )}
 
-      {/* Recent Status */}
+      {/* Latest Status - Large Card */}
       {recentStatus && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-accent-foreground" />
-                Latest Status
-              </CardTitle>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard/status">
-                  View All <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-              </Button>
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-8 backdrop-blur-xl hover:border-white/20 transition-smooth">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-secondary" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Latest Update</h3>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg">{recentStatus.content}</p>
-            {recentStatus.studying_for && (
-              <p className="text-muted-foreground mt-2">
-                Studying for: <span className="text-foreground font-medium">{recentStatus.studying_for}</span>
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground mt-2">
-              {formatDistanceToNow(new Date(recentStatus.created_at), { addSuffix: true })}
-            </p>
-          </CardContent>
-        </Card>
+            <Link href="/dashboard/status" className="text-sm text-primary hover:text-primary/80 transition-smooth font-semibold">
+              View All
+            </Link>
+          </div>
+          <p className="text-xl text-white leading-relaxed">{recentStatus.content}</p>
+          {recentStatus.studying_for && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-sm text-muted-foreground">Currently studying:</p>
+              <p className="text-lg font-semibold text-accent mt-1">{recentStatus.studying_for}</p>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mt-4">
+            {formatDistanceToNow(new Date(recentStatus.created_at), { addSuffix: true })}
+          </p>
+        </div>
       )}
 
-      {/* Upcoming Schedule */}
+      {/* Upcoming Events */}
       {upcomingSchedule.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-chart-3" />
-                Upcoming Schedule
-              </CardTitle>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard/schedule">
-                  View All <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-              </Button>
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-8 backdrop-blur-xl hover:border-white/20 transition-smooth">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-accent" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Up Next</h3>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingSchedule.map((item: { id: string; title: string; item_type: string; start_date: string }) => (
-                <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{item.item_type}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(item.start_date), { addSuffix: true })}
-                  </p>
+            <Link href="/dashboard/schedule" className="text-sm text-primary hover:text-primary/80 transition-smooth font-semibold">
+              Full Schedule
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {upcomingSchedule.map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-smooth">
+                <div>
+                  <p className="font-semibold text-white">{item.title}</p>
+                  <p className="text-sm text-muted-foreground capitalize mt-1">{item.item_type}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <p className="text-sm text-accent font-medium">
+                  {formatDistanceToNow(new Date(item.start_date), { addSuffix: true })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* No Content State for Viewer */}
-      {!isOwner && !recentStatus && recentPhotos.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Content Yet</h3>
-            <p className="text-muted-foreground">
-              Your student hasn&apos;t shared any updates yet. Check back soon!
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Setup Prompt for New Owner */}
+      {/* Empty State or Setup */}
       {isOwner && !recentStatus && recentPhotos.length === 0 && connectionCount === 0 && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="py-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">Get Started!</h3>
-            <p className="text-muted-foreground mb-4">
-              Welcome to CollegeLife! Start by inviting your family and friends, then share your first photo or status update.
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/5 border border-white/10 p-12 backdrop-blur-xl text-center">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10"></div>
+          <div className="relative z-10 space-y-4">
+            <h3 className="text-2xl font-bold text-white">Welcome to CollegeLife! 🎓</h3>
+            <p className="text-muted-foreground max-w-lg mx-auto">
+              Start by inviting your family and friends, then share your first photo, status, or schedule event.
             </p>
-            <Button asChild>
-              <Link href="/dashboard/invites">Create Your First Invite</Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <div className="flex gap-3 justify-center pt-4">
+              <Link 
+                href="/dashboard/invites"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:shadow-lg hover:shadow-primary/50 transition-smooth"
+              >
+                <Plus className="w-5 h-5" />
+                Create Invite
+              </Link>
+              <Link 
+                href="/dashboard/photos"
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary/60 text-white rounded-lg font-bold hover:border-primary hover:bg-primary/5 transition-smooth"
+              >
+                <Camera className="w-5 h-5" />
+                Upload Photo
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
