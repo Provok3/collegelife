@@ -36,7 +36,13 @@ export default async function PhotosPage() {
           id,
           content,
           created_at,
-          user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url)
+          parent_id,
+          user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url),
+          reactions:photo_comment_reactions(
+            id,
+            emoji,
+            user_id
+          )
         ),
         reactions:photo_reactions(
           id,
@@ -65,7 +71,13 @@ export default async function PhotosPage() {
             id,
             content,
             created_at,
-            user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url)
+            parent_id,
+            user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url),
+            reactions:photo_comment_reactions(
+              id,
+              emoji,
+              user_id
+            )
           ),
           reactions:photo_reactions(
             id,
