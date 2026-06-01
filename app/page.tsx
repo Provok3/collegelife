@@ -83,7 +83,10 @@ export default function LandingPage() {
                 >
                   Get Started
                 </Link>
-                <button className="px-8 py-3.5 border-2 border-primary/60 text-white rounded-lg font-bold hover:border-primary hover:bg-primary/5 transition-smooth">
+                <button 
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-8 py-3.5 border-2 border-primary/60 text-white rounded-lg font-bold hover:border-primary hover:bg-primary/5 transition-smooth"
+                >
                   How It Works
                 </button>
               </div>
@@ -164,7 +167,7 @@ export default function LandingPage() {
           </div>
 
           {/* How It Works */}
-          <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border border-white/10 rounded-2xl p-12 mb-24 backdrop-blur-xl">
+          <div id="how-it-works" className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border border-white/10 rounded-2xl p-12 mb-24 backdrop-blur-xl scroll-mt-24">
             <div className="max-w-3xl">
               <h3 className="text-3xl font-bold text-white mb-8">How It Works</h3>
               <div className="space-y-6">
