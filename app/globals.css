@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:is(.dark *));
+
 /* Bold animations for Gen Z UX */
 @layer utilities {
   @keyframes slide-in {
@@ -51,28 +53,24 @@
 }
 
 :root {
-  /* Deep dark default - Gen Z dark mode aesthetic */
-  --background: 0 0% 8%;
-  --foreground: 0 0% 95%;
-  --card: 0 0% 12%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 12%;
-  --popover-foreground: 0 0% 95%;
-  /* Electric magenta primary */
+  --background: 0 0% 98%;
+  --foreground: 0 0% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 8%;
   --primary: 300 100% 55%;
-  --primary-foreground: 0 0% 0%;
-  /* Cyan secondary */
+  --primary-foreground: 0 0% 100%;
   --secondary: 180 100% 50%;
-  --secondary-foreground: 0 0% 0%;
-  /* Lime accent */
+  --secondary-foreground: 0 0% 100%;
   --accent: 120 100% 50%;
-  --accent-foreground: 0 0% 0%;
-  --muted: 0 0% 25%;
-  --muted-foreground: 0 0% 70%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 40%;
   --destructive: 0 100% 60%;
-  --destructive-foreground: 0 0% 0%;
-  --border: 0 0% 20%;
-  --input: 0 0% 15%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 95%;
   --ring: 300 100% 55%;
   --chart-1: 300 100% 55%;
   --chart-2: 180 100% 50%;
@@ -80,52 +78,14 @@
   --chart-4: 40 100% 60%;
   --chart-5: 0 100% 60%;
   --radius: 0.5rem;
-  --sidebar: 0 0% 10%;
-  --sidebar-foreground: 0 0% 95%;
+  --sidebar: 0 0% 95%;
+  --sidebar-foreground: 0 0% 8%;
   --sidebar-primary: 300 100% 55%;
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-accent: 0 0% 20%;
-  --sidebar-accent-foreground: 0 0% 95%;
-  --sidebar-border: 0 0% 18%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 90%;
+  --sidebar-accent-foreground: 0 0% 40%;
+  --sidebar-border: 0 0% 90%;
   --sidebar-ring: 300 100% 55%;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
-    --primary: 300 100% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 180 100% 50%;
-    --secondary-foreground: 0 0% 100%;
-    --accent: 120 100% 50%;
-    --accent-foreground: 0 0% 100%;
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 40%;
-    --destructive: 0 100% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
-    --ring: 300 100% 55%;
-    --chart-1: 300 100% 55%;
-    --chart-2: 180 100% 50%;
-    --chart-3: 120 100% 50%;
-    --chart-4: 40 100% 60%;
-    --chart-5: 0 100% 60%;
-    --radius: 0.5rem;
-    --sidebar: 0 0% 95%;
-    --sidebar-foreground: 0 0% 8%;
-    --sidebar-primary: 300 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 90%;
-    --sidebar-accent-foreground: 0 0% 40%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 300 100% 55%;
-  }
 }
 
 .dark {
