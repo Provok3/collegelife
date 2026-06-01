@@ -64,9 +64,9 @@ export function StatusForm({ userId }: StatusFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-white/10 text-white shadow-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-lg text-white">
           <MessageCircle className="w-5 h-5" />
           Post an Update
         </CardTitle>
@@ -74,26 +74,38 @@ export function StatusForm({ userId }: StatusFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="content">What&apos;s on your mind?</Label>
+            <Label htmlFor="content" className="text-white">
+              What&apos;s on your mind?
+            </Label>
             <Textarea
               id="content"
               placeholder="Share what's happening in your college life..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={3}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
             />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="mood">How are you feeling?</Label>
+              <Label htmlFor="mood" className="text-white">
+                How are you feeling?
+              </Label>
               <Select value={mood} onValueChange={setMood}>
-                <SelectTrigger id="mood">
+                <SelectTrigger
+                  id="mood"
+                  className="w-full bg-slate-700 border-white/10 text-white hover:bg-slate-600 data-[placeholder]:text-white/50"
+                >
                   <SelectValue placeholder="Select mood (optional)" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100] bg-slate-800 border-white/10 text-white">
                   {MOODS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
+                    <SelectItem
+                      key={m.value}
+                      value={m.value}
+                      className="focus:bg-white/10 focus:text-white"
+                    >
                       <span className={m.color}>{m.label}</span>
                     </SelectItem>
                   ))}
@@ -102,12 +114,15 @@ export function StatusForm({ userId }: StatusFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="studyingFor">Studying for?</Label>
+              <Label htmlFor="studyingFor" className="text-white">
+                Studying for?
+              </Label>
               <Input
                 id="studyingFor"
                 placeholder="e.g., Chemistry midterm"
                 value={studyingFor}
                 onChange={(e) => setStudyingFor(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
               />
             </div>
           </div>

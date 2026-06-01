@@ -235,11 +235,11 @@ export default async function DashboardPage() {
           <p className="text-xl text-white leading-relaxed">{recentStatus.content}</p>
           {recentStatus.studying_for && (
             <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-sm text-muted-foreground">Currently studying:</p>
-              <p className="text-lg font-semibold text-accent mt-1">{recentStatus.studying_for}</p>
+              <p className="text-sm text-white/70">Currently studying:</p>
+              <p className="text-lg font-semibold text-white mt-1">{recentStatus.studying_for}</p>
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-xs text-white/70 mt-4">
             {formatDistanceToNow(new Date(recentStatus.created_at), { addSuffix: true })}
           </p>
         </div>
