@@ -41,7 +41,7 @@ interface Photo {
     display_name: string | null
     avatar_url: string | null
   }
-  comments: PhotoComment[]
+  comments?: PhotoComment[]
   reactions: Array<{
     id: string
     emoji: string
@@ -62,7 +62,7 @@ const EMOJI_OPTIONS = [
   { emoji: 'smile', icon: Smile, label: 'Smile' },
 ]
 
-const COMMENT_SELECT = `
+const COMMENT_SELECT_FULL = `
   id,
   content,
   created_at,
@@ -75,9 +75,19 @@ const COMMENT_SELECT = `
   )
 `
 
-function normalizeComment(comment: PhotoComment): PhotoComment {
+const COMMENT_SELECT_BASIC = `
+  id,
+  content,
+  created_at,
+  user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url)
+`
+
+function normalizeComment(
+  comment: PhotoComment & { parent_id?: string | null },
+): PhotoComment {
   return {
     ...comment,
+    parent_id: comment.parent_id ?? null,
     reactions: comment.reactions ?? [],
   }
 }
@@ -92,7 +102,7 @@ function updatePhotoComment(
     if (photo.id !== photoId) return photo
     return {
       ...photo,
-      comments: photo.comments.map((comment) =>
+      comments: (photo.comments ?? []).map((comment) =>
         comment.id === commentId ? updater(comment) : comment,
       ),
     }
@@ -202,7 +212,7 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
   const [photos, setPhotos] = useState(() =>
     initialPhotos.map((photo) => ({
       ...photo,
-      comments: photo.comments.map((comment) => normalizeComment(comment)),
+      comments: (photo.comments ?? []).map((comment) => normalizeComment(comment)),
     })),
   )
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null)
@@ -232,22 +242,51 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
 
     setIsSubmitting(true)
 
-    const { data, error } = await supabase
+    const insertPayload: {
+      photo_id: string
+      user_id: string
+      content: string
+      parent_id?: string
+    } = {
+      photo_id: photoId,
+      user_id: userId,
+      content,
+    }
+    if (parentId) insertPayload.parent_id = parentId
+
+    let { data, error } = await supabase
       .from('photo_comments')
-      .insert({
-        photo_id: photoId,
-        user_id: userId,
-        content,
-        parent_id: parentId,
-      })
-      .select(COMMENT_SELECT)
+      .insert(insertPayload)
+      .select(COMMENT_SELECT_FULL)
       .single()
+
+    if (error && parentId) {
+      const fallback = await supabase
+        .from('photo_comments')
+        .insert({
+          photo_id: photoId,
+          user_id: userId,
+          content,
+        })
+        .select(COMMENT_SELECT_BASIC)
+        .single()
+      data = fallback.data
+      error = fallback.error
+    } else if (error) {
+      const fallback = await supabase
+        .from('photo_comments')
+        .insert(insertPayload)
+        .select(COMMENT_SELECT_BASIC)
+        .single()
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (!error && data) {
       setPhotos(
         photos.map((p) => {
           if (p.id === photoId) {
-            return { ...p, comments: [...p.comments, normalizeComment(data)] }
+            return { ...p, comments: [...(p.comments ?? []), normalizeComment(data)] }
           }
           return p
         }),
@@ -268,7 +307,7 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
     emoji: string,
   ) => {
     const photo = photos.find((p) => p.id === photoId)
-    const comment = photo?.comments.find((c) => c.id === commentId)
+    const comment = photo?.comments?.find((c) => c.id === commentId)
     if (!comment) return
 
     const reactions = comment.reactions ?? []
@@ -459,8 +498,9 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-max">
       {photos.map((photo) => {
         const isExpanded = expandedPhoto === photo.id
-        const commentTree = buildCommentTree(photo.comments)
-        const totalComments = photo.comments.length
+        const photoComments = photo.comments ?? []
+        const commentTree = buildCommentTree(photoComments)
+        const totalComments = photoComments.length
         const reactionCounts = EMOJI_OPTIONS.map((opt) => ({
           ...opt,
           count: photo.reactions.filter((r) => r.emoji === opt.emoji).length,
