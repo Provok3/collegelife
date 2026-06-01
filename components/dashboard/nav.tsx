@@ -4,11 +4,11 @@ import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { 
-  GraduationCap, 
   Camera, 
   MessageCircle, 
   Calendar, 
@@ -73,7 +73,13 @@ export function DashboardNav({ user, profile, isOwner, connectedOwners }: Dashbo
       {/* Header */}
       <div className="p-4 border-b">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
+          <Image 
+            src="/logo.png" 
+            alt="CollegeLife Logo"
+            width={28}
+            height={28}
+            className="w-7 h-7"
+          />
           <span className="font-bold text-lg">CollegeLife</span>
         </Link>
       </div>
@@ -137,7 +143,13 @@ export function DashboardNav({ user, profile, isOwner, connectedOwners }: Dashbo
       {/* Mobile Nav */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
+          <Image 
+            src="/logo.png" 
+            alt="CollegeLife Logo"
+            width={28}
+            height={28}
+            className="w-7 h-7"
+          />
           <span className="font-bold">CollegeLife</span>
         </Link>
         <Sheet open={open} onOpenChange={setOpen}>
