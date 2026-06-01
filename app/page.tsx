@@ -181,42 +181,42 @@ export default function LandingPage() {
           </div>
 
           {/* How It Works */}
-          <div id="how-it-works" className="bg-card border border-border rounded-2xl p-12 mb-24 scroll-mt-24">
+          <div id="how-it-works" className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-primary/30 rounded-2xl p-12 mb-24 scroll-mt-24 backdrop-blur-xl">
             <div className="max-w-3xl">
-              <h3 className="text-3xl font-bold text-foreground mb-8">How It Works</h3>
+              <h3 className="text-3xl font-bold text-white mb-8">How It Works</h3>
               <div className="space-y-8">
                 <div className="flex gap-5 items-start">
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold flex-shrink-0 text-black">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold flex-shrink-0 text-white">
                     1
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-foreground mb-1">Sign in with Google</h4>
-                    <p className="text-muted-foreground">Quick and secure — no passwords needed</p>
+                    <h4 className="text-lg font-bold text-white mb-1">Sign in with Google</h4>
+                    <p className="text-gray-300">Quick and secure — no passwords needed</p>
                   </div>
                 </div>
                 <div className="flex gap-5 items-start">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold flex-shrink-0 text-black">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold flex-shrink-0 text-white">
                     2
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-foreground mb-1">Generate invite codes</h4>
-                    <p className="text-muted-foreground">Create personal codes to share with family and friends</p>
+                    <h4 className="text-lg font-bold text-white mb-1">Generate invite codes</h4>
+                    <p className="text-gray-300">Create personal codes to share with family and friends</p>
                   </div>
                 </div>
                 <div className="flex gap-5 items-start">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center font-bold flex-shrink-0 text-black">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center font-bold flex-shrink-0 text-white">
                     3
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-foreground mb-1">They join and stay connected</h4>
-                    <p className="text-muted-foreground">They sign in with Google, enter your code, and instantly see all your updates</p>
+                    <h4 className="text-lg font-bold text-white mb-1">They join and stay connected</h4>
+                    <p className="text-gray-300">They sign in with Google, enter your code, and instantly see all your updates</p>
                   </div>
                 </div>
               </div>
 
               {/* Sign in CTA inline */}
-              <div className="mt-10 pt-8 border-t border-border">
-                <p className="text-foreground font-semibold mb-4">Ready? Start here:</p>
+              <div className="mt-10 pt-8 border-t border-slate-700">
+                <p className="text-white font-semibold mb-4">Ready? Start here:</p>
                 <button
                   onClick={handleGoogleLogin}
                   disabled={isSigningIn}
