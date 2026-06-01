@@ -103,6 +103,8 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
   }
 
   const handleReaction = async (photoId: string, emoji: string) => {
+    if (isOwner) return
+
     const photo = photos.find(p => p.id === photoId)
     if (!photo) return
 
@@ -215,23 +217,35 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
                 </div>
               )}
 
-              {/* Reactions Grid */}
+              {/* Reactions — viewers can react; owners see counts only */}
               <div className="grid grid-cols-4 gap-1">
-                {reactionCounts.map(({ emoji, icon: Icon, label, count, hasReacted }) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleReaction(photo.id, emoji)}
-                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-smooth ${
-                      hasReacted
-                        ? 'bg-primary/30 border border-primary/60 text-primary'
-                        : 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20'
-                    }`}
-                    title={label}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {count > 0 && <span className="text-xs mt-0.5">{count}</span>}
-                  </button>
-                ))}
+                {reactionCounts.map(({ emoji, icon: Icon, label, count, hasReacted }) =>
+                  isOwner ? (
+                    <div
+                      key={emoji}
+                      className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-white/5 border border-white/10 text-muted-foreground"
+                      title={count > 0 ? `${count} ${label}` : label}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {count > 0 && <span className="text-xs mt-0.5">{count}</span>}
+                    </div>
+                  ) : (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => handleReaction(photo.id, emoji)}
+                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-smooth ${
+                        hasReacted
+                          ? 'bg-primary/30 border border-primary/60 text-primary'
+                          : 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10 hover:border-white/20'
+                      }`}
+                      title={label}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {count > 0 && <span className="text-xs mt-0.5">{count}</span>}
+                    </button>
+                  ),
+                )}
               </div>
 
               {/* Comments Button */}
