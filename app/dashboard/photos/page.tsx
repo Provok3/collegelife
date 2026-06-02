@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PhotoGallery } from '@/components/dashboard/photo-gallery'
 import { PhotoUpload } from '@/components/dashboard/photo-upload'
-import { fetchPhotosForGallery } from '@/lib/photos/fetch-photos'
+import { fetchPhotosForGallery, type GalleryPhoto } from '@/lib/photos/fetch-photos'
 
 export default async function PhotosPage() {
   const supabase = await createClient()
@@ -24,7 +24,7 @@ export default async function PhotosPage() {
 
   const isOwner = profile?.is_owner || (ownerConnections && ownerConnections.length > 0)
 
-  let photos = []
+  let photos: GalleryPhoto[] = []
 
   if (isOwner) {
     photos = await fetchPhotosForGallery(supabase, { ownerId: user.id })
