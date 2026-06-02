@@ -10,48 +10,7 @@ import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile, X } 
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { PhotoComment } from './photo-comment'
-
-interface Photo {
-  id: string
-  owner_id: string
-  blob_pathname: string
-  caption: string | null
-  created_at: string
-  owner?: {
-    display_name: string | null
-    avatar_url: string | null
-  }
-  comments: Array<{
-    id: string
-    content: string
-    created_at: string
-    user: {
-      id: string
-      display_name: string | null
-      avatar_url: string | null
-    }
-    replies?: Array<{
-      id: string
-      content: string
-      created_at: string
-      user: {
-        id: string
-        display_name: string | null
-        avatar_url: string | null
-      }
-    }>
-    reactions?: Array<{
-      id: string
-      emoji: string
-      user_id: string
-    }>
-  }>
-  reactions: Array<{
-    id: string
-    emoji: string
-    user_id: string
-  }>
-}
+import type { GalleryPhoto as Photo } from '@/lib/photos/fetch-photos'
 
 interface PhotoGalleryProps {
   photos: Photo[]
@@ -129,9 +88,12 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
       .single()
 
     if (!error && data) {
+      // Supabase infers the embedded `user` relation as an array; at runtime
+      // it's a single profile for this to-one FK, so coerce to the comment type.
+      const comment = data as unknown as Photo['comments'][number]
       setPhotos(photos.map(p => {
         if (p.id === photoId) {
-          return { ...p, comments: [...p.comments, data] }
+          return { ...p, comments: [...p.comments, comment] }
         }
         return p
       }))
