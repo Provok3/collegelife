@@ -140,6 +140,23 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
     setIsSubmitting(false)
   }
 
+  const handleDeleteComment = async (photoId: string, commentId: string) => {
+    if (!confirm('Delete this comment? Its replies and reactions will be removed too.')) return
+
+    const response = await fetch(`/api/photos/comments?id=${commentId}`, {
+      method: 'DELETE',
+    })
+
+    if (response.ok) {
+      setPhotos(photos.map(p => {
+        if (p.id === photoId) {
+          return { ...p, comments: p.comments.filter(c => c.id !== commentId) }
+        }
+        return p
+      }))
+    }
+  }
+
   const handleReaction = async (photoId: string, emoji: string) => {
     const photo = photos.find(p => p.id === photoId)
     if (!photo) return
