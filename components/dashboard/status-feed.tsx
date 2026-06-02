@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
@@ -42,6 +42,12 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
   const [statuses, setStatuses] = useState(initialStatuses)
   const router = useRouter()
   const supabase = createClient()
+
+  // Keep the feed in sync with refreshed server data — e.g. after posting a
+  // new update, router.refresh() re-fetches and the new status arrives here.
+  useEffect(() => {
+    setStatuses(initialStatuses)
+  }, [initialStatuses])
 
   const handleDelete = async (statusId: string) => {
     if (!confirm('Are you sure you want to delete this status?')) return
