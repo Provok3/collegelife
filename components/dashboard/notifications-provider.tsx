@@ -67,39 +67,73 @@ export function NotificationsProvider({
 
   // Realtime subscription for new notifications.
   useEffect(() => {
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id=eq.${userId}`,
-        },
-        async (payload) => {
-          const row = payload.new as AppNotification
-          // The realtime payload doesn't include the joined actor profile.
-          let actor: AppNotification['actor'] = null
-          if (row.actor_id) {
-            const { data } = await supabase
-              .from('profiles')
-              .select('display_name, avatar_url')
-              .eq('id', row.actor_id)
-              .single()
-            actor = data
-          }
-          const enriched: AppNotification = { ...row, actor }
-          setNotifications((prev) =>
-            prev.some((n) => n.id === enriched.id) ? prev : [enriched, ...prev],
-          )
-          toast(describeNotification(enriched).title)
-        },
+    let cancelled = false
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    const handleInsert = async (payload: { new: AppNotification }) => {
+      const row = payload.new
+      // The realtime payload doesn't include the joined actor profile.
+      let actor: AppNotification['actor'] = null
+      if (row.actor_id) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', row.actor_id)
+          .single()
+        actor = data
+      }
+      const enriched: AppNotification = { ...row, actor }
+      setNotifications((prev) =>
+        prev.some((n) => n.id === enriched.id) ? prev : [enriched, ...prev],
       )
-      .subscribe()
+      toast(describeNotification(enriched).title)
+    }
+
+    const subscribe = async () => {
+      // Realtime checks the postgres_changes subscription against RLS, which
+      // requires the user's JWT on the websocket. The session is hydrated from
+      // cookies asynchronously, so set the token *before* subscribing — otherwise
+      // Realtime connects as the anon role, RLS rejects it, and no events arrive.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (cancelled) return
+      await supabase.realtime.setAuth(session?.access_token ?? null)
+      if (cancelled) return
+
+      channel = supabase
+        .channel(`notifications:${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `recipient_id=eq.${userId}`,
+          },
+          handleInsert,
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('[notifications] realtime channel status:', status)
+          }
+        })
+    }
+
+    subscribe()
+
+    // Keep the Realtime token fresh across token refreshes / re-auth so the
+    // subscription doesn't go stale after the access token rotates.
+    const {
+      data: { subscription: authSub },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      supabase.realtime.setAuth(session?.access_token ?? null)
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      authSub.unsubscribe()
+      if (channel) supabase.removeChannel(channel)
     }
   }, [supabase, userId])
 
