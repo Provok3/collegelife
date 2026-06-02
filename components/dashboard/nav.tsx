@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { NotificationBell } from '@/components/dashboard/notification-bell'
 
 interface Profile {
   id: string
@@ -140,16 +141,19 @@ export function DashboardNav({ user, profile, isOwner, connectedOwners }: Dashbo
           <GraduationCap className="w-6 h-6 text-primary" />
           <span className="font-bold">CollegeLife</span>
         </Link>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <NavContent />
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64">
+              <NavContent />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       <div className="lg:hidden h-16" /> {/* Spacer for mobile */}
 
