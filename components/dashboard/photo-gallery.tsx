@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { PhotoComment } from './photo-comment'
 
 interface Photo {
   id: string
@@ -28,6 +29,21 @@ interface Photo {
       display_name: string | null
       avatar_url: string | null
     }
+    replies?: Array<{
+      id: string
+      content: string
+      created_at: string
+      user: {
+        id: string
+        display_name: string | null
+        avatar_url: string | null
+      }
+    }>
+    reactions?: Array<{
+      id: string
+      emoji: string
+      user_id: string
+    }>
   }>
   reactions: Array<{
     id: string
@@ -249,26 +265,12 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
               {isExpanded && (
                 <div className="space-y-3 pt-3 border-t border-white/10">
                   {photo.comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-2">
-                      <Avatar className="w-7 h-7 flex-shrink-0">
-                        <AvatarImage src={comment.user.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-secondary/20 text-secondary">
-                          {(comment.user.display_name || 'U').slice(0, 1)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="bg-white/5 border border-white/10 rounded-lg p-2.5">
-                          <p className="text-sm">
-                            <span className="font-semibold text-white">{comment.user.display_name || 'User'}</span>
-                            <br />
-                            <span className="text-muted-foreground">{comment.content}</span>
-                          </p>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
+                    <PhotoComment
+                      key={comment.id}
+                      comment={comment}
+                      userId={userId}
+                      onDelete={(commentId) => handleDeleteComment(photo.id, commentId)}
+                    />
                   ))}
 
                   {/* Add comment */}
