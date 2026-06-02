@@ -18,6 +18,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Authorization: the parent comment must exist on a status the user can see
+    // (SELECT RLS enforces visibility), and its status must match statusId so a
+    // reply can't be attached across scopes.
+    const { data: parentComment } = await supabase
+      .from('status_comments')
+      .select('id, status_id')
+      .eq('id', commentId)
+      .single()
+
+    if (!parentComment || parentComment.status_id !== statusId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Insert reply as a comment with parent_id set to the comment being replied to
     const { data, error } = await supabase
       .from('status_comments')
