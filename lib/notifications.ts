@@ -15,6 +15,9 @@ export type NotificationType =
   | 'photo_reaction'
   | 'comment_reply'
   | 'comment_reaction'
+  | 'status_comment'
+  | 'status_comment_reply'
+  | 'status_comment_reaction'
 
 export interface AppNotification {
   id: string
@@ -24,6 +27,7 @@ export interface AppNotification {
   photo_id: string | null
   comment_id: string | null
   status_id: string | null
+  status_comment_id: string | null
   schedule_item_id: string | null
   data: {
     caption?: string | null
@@ -110,6 +114,26 @@ export function describeNotification(n: AppNotification): NotificationDescriptor
         icon: Heart,
         title: `${actor} reacted ${emoji} to your comment`.trim(),
         href: photoHref,
+      }
+    case 'status_comment':
+      return {
+        icon: MessageCircle,
+        title: `${actor} commented on your update`,
+        detail: n.data?.content || undefined,
+        href: '/dashboard/status',
+      }
+    case 'status_comment_reply':
+      return {
+        icon: Reply,
+        title: `${actor} replied to your comment`,
+        detail: n.data?.content || undefined,
+        href: '/dashboard/status',
+      }
+    case 'status_comment_reaction':
+      return {
+        icon: Heart,
+        title: `${actor} reacted ${emoji} to your comment`.trim(),
+        href: '/dashboard/status',
       }
     default:
       return {

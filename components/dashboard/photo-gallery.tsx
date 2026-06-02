@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { PhotoComment } from './photo-comment'
+import { CommentThread } from './comment-thread'
 import type { GalleryPhoto as Photo } from '@/lib/photos/fetch-photos'
 
 interface PhotoGalleryProps {
@@ -270,10 +270,12 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
               {isExpanded && (
                 <div className="space-y-3 pt-3 border-t border-border">
                   {photo.comments.map((comment) => (
-                    <PhotoComment
+                    <CommentThread
                       key={comment.id}
                       comment={comment}
-                      photoId={photo.id}
+                      parentId={photo.id}
+                      parentField="photoId"
+                      apiBase="/api/photos/comments"
                       userId={userId}
                       onDelete={(commentId) => handleDeleteComment(photo.id, commentId)}
                     />
