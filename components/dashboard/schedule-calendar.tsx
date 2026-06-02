@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,6 +69,12 @@ function groupItemsByDate(items: ScheduleItem[]) {
 
 export function ScheduleCalendar({ items: initialItems, userId, isOwner }: ScheduleCalendarProps) {
   const [items, setItems] = useState(initialItems)
+
+  // Keep the calendar in sync with refreshed server data — e.g. after adding a
+  // new item, router.refresh() re-fetches and the new item arrives here.
+  useEffect(() => {
+    setItems(initialItems)
+  }, [initialItems])
   const router = useRouter()
   const supabase = createClient()
 

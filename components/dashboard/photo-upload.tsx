@@ -51,11 +51,17 @@ export function PhotoUpload() {
       })
 
       if (response.ok) {
+        const { photo } = await response.json()
         setOpen(false)
         setFile(null)
         setPreview(null)
         setCaption('')
+        // Land on the freshly uploaded photo: re-fetch the server data, then
+        // deep-link to it so the gallery expands and scrolls into view.
         router.refresh()
+        if (photo?.id) {
+          router.push(`/dashboard/photos?photo=${photo.id}`)
+        }
       }
     } catch (error) {
       console.error('Upload failed:', error)

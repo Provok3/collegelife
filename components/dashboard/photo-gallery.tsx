@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -75,15 +75,25 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const scrolledToRef = useRef<string | null>(null)
 
-  // When arriving via a notification deep link (?photo=<id>), expand and scroll
-  // to that photo.
+  // Keep the gallery in sync with refreshed server data — e.g. after a new
+  // upload triggers router.refresh(), the new photo arrives via this prop.
+  useEffect(() => {
+    setPhotos(initialPhotos)
+  }, [initialPhotos])
+
+  // When arriving via a notification or a fresh upload (?photo=<id>), expand and
+  // scroll to that photo once it's actually present in the list.
   useEffect(() => {
     if (!focusPhoto) return
+    if (!photos.some((p) => p.id === focusPhoto)) return
     setExpandedPhoto(focusPhoto)
+    if (scrolledToRef.current === focusPhoto) return
+    scrolledToRef.current = focusPhoto
     const el = document.getElementById(`photo-${focusPhoto}`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [focusPhoto])
+  }, [focusPhoto, photos])
 
   const handleDelete = async (photoId: string) => {
     if (!confirm('Are you sure you want to delete this photo?')) return
