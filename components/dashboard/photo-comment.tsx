@@ -40,6 +40,7 @@ interface Comment {
 
 interface PhotoCommentProps {
   comment: Comment
+  photoId: string
   userId: string
   onDelete?: (commentId: string) => void
   onReplyAdded?: (reply: CommentReply) => void
@@ -52,7 +53,7 @@ const EMOJI_OPTIONS = [
   { emoji: 'smile', icon: Smile, label: 'Smile' },
 ]
 
-export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoCommentProps) {
+export function PhotoComment({ comment, photoId, userId, onDelete, onReplyAdded }: PhotoCommentProps) {
   const [showReplies, setShowReplies] = useState(false)
   const [replies, setReplies] = useState<CommentReply[]>(comment.replies || [])
   const [reactions, setReactions] = useState<CommentReaction[]>(comment.reactions || [])
@@ -90,7 +91,7 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
       const response = await fetch('/api/photos/comments/replies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId: comment.id, content: newReply.trim() }),
+        body: JSON.stringify({ commentId: comment.id, photoId, content: newReply.trim() }),
       })
       if (response.ok) {
         const reply = await response.json()

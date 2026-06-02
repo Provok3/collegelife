@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { commentId, content } = await request.json()
+    const { commentId, photoId, content } = await request.json()
 
     const supabase = await createClient()
     const {
@@ -14,22 +14,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!commentId || !content?.trim()) {
+    if (!commentId || !photoId || !content?.trim()) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Insert reply as a comment with parent_id set to the comment being replied to
     const { data, error } = await supabase
-      .from('photo_comment_replies')
+      .from('photo_comments')
       .insert({
-        comment_id: commentId,
+        photo_id: photoId,
         user_id: user.id,
         content: content.trim(),
+        parent_id: commentId,
       })
       .select(`
         id,
         content,
         created_at,
-        user:profiles!photo_comment_replies_user_id_fkey(id, display_name, avatar_url)
+        parent_id,
+        user:profiles!photo_comments_user_id_fkey(id, display_name, avatar_url)
       `)
       .single()
 
@@ -55,19 +58,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user owns the reply
+    // Check if user owns the reply (which is just a comment with parent_id)
     const { data: reply } = await supabase
-      .from('photo_comment_replies')
-      .select('user_id')
+      .from('photo_comments')
+      .select('user_id, parent_id')
       .eq('id', replyId)
       .single()
 
-    if (!reply || reply.user_id !== user.id) {
+    if (!reply || reply.user_id !== user.id || !reply.parent_id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { error } = await supabase
-      .from('photo_comment_replies')
+      .from('photo_comments')
       .delete()
       .eq('id', replyId)
 

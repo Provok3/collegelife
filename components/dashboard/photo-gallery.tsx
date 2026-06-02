@@ -268,6 +268,7 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
                     <PhotoComment
                       key={comment.id}
                       comment={comment}
+                      photoId={photo.id}
                       userId={userId}
                       onDelete={(commentId) => handleDeleteComment(photo.id, commentId)}
                     />
