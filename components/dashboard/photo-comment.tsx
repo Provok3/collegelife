@@ -69,7 +69,6 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId: comment.id, emoji }),
       })
-
       setReactions(reactions.filter(r => r.id !== existingReaction.id))
     } else {
       const response = await fetch('/api/photos/comments/reactions', {
@@ -77,7 +76,6 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId: comment.id, emoji }),
       })
-
       if (response.ok) {
         const data = await response.json()
         setReactions([...reactions, data])
@@ -88,14 +86,12 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
   const handleAddReply = async () => {
     if (!newReply.trim()) return
     setIsSubmitting(true)
-
     try {
       const response = await fetch('/api/photos/comments/replies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId: comment.id, content: newReply.trim() }),
       })
-
       if (response.ok) {
         const reply = await response.json()
         setReplies([...replies, reply])
@@ -109,11 +105,9 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
 
   const handleDeleteReply = async (replyId: string) => {
     if (!confirm('Delete this reply?')) return
-
     const response = await fetch(`/api/photos/comments/replies?id=${replyId}`, {
       method: 'DELETE',
     })
-
     if (response.ok) {
       setReplies(replies.filter(r => r.id !== replyId))
     }
@@ -122,7 +116,7 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
   const reactionCounts = EMOJI_OPTIONS.map(opt => ({
     ...opt,
     count: reactions.filter(r => r.emoji === opt.emoji).length,
-    hasReacted: reactions.some(r => r.user_id === userId && r.emoji === opt.emoji)
+    hasReacted: reactions.some(r => r.user_id === userId && r.emoji === opt.emoji),
   }))
 
   return (
@@ -135,16 +129,15 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
             {(comment.user.display_name || 'U').slice(0, 1)}
           </AvatarFallback>
         </Avatar>
+
         <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-2.5">
-            <p className="text-sm">
-              <span className="font-semibold text-white">{comment.user.display_name || 'User'}</span>
-              <br />
-              <span className="text-muted-foreground">{comment.content}</span>
-            </p>
+          {/* Bubble */}
+          <div className="bg-muted border border-border rounded-lg p-2.5">
+            <p className="text-sm font-semibold text-foreground">{comment.user.display_name || 'User'}</p>
+            <p className="text-sm text-muted-foreground">{comment.content}</p>
           </div>
 
-          {/* Comment reactions */}
+          {/* Reaction counts */}
           {reactionCounts.some(r => r.count > 0) && (
             <div className="flex flex-wrap gap-1">
               {reactionCounts.map(({ emoji, icon: Icon, count, hasReacted }) =>
@@ -152,10 +145,10 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
                   <button
                     key={emoji}
                     onClick={() => handleToggleReaction(emoji)}
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-smooth ${
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-smooth border ${
                       hasReacted
-                        ? 'bg-primary/30 border border-primary/60 text-primary'
-                        : 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10'
+                        ? 'bg-primary/20 border-primary/60 text-primary'
+                        : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
@@ -166,15 +159,15 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
             </div>
           )}
 
-          {/* Comment meta */}
+          {/* Meta row */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
             <button
               onClick={() => setShowReplies(!showReplies)}
-              className="flex items-center gap-1 hover:text-white transition-colors"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               {showReplies ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              <span>{replies.length} repl{replies.length !== 1 ? 'ies' : 'y'}</span>
+              <span>{replies.length} {replies.length !== 1 ? 'replies' : 'reply'}</span>
             </button>
             {comment.user.id === userId && (
               <button
@@ -186,7 +179,7 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
             )}
           </div>
 
-          {/* Add reaction buttons inline */}
+          {/* Reaction add buttons */}
           <div className="flex gap-1">
             {reactionCounts.map(({ emoji, icon: Icon, label, hasReacted }) => (
               <button
@@ -196,7 +189,7 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
                 className={`p-1 rounded transition-smooth ${
                   hasReacted
                     ? 'bg-primary/20 text-primary'
-                    : 'bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -208,8 +201,7 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
 
       {/* Replies */}
       {showReplies && (
-        <div className="ml-6 space-y-2 pt-2 border-l border-white/10 pl-4">
-          {/* Existing replies */}
+        <div className="ml-6 space-y-2 pt-2 border-l-2 border-border pl-4">
           {replies.map(reply => (
             <div key={reply.id} className="flex gap-2">
               <Avatar className="w-6 h-6 flex-shrink-0">
@@ -219,12 +211,9 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="bg-white/5 border border-white/10 rounded-lg p-2">
-                  <p className="text-xs">
-                    <span className="font-semibold text-white">{reply.user.display_name || 'User'}</span>
-                    <br />
-                    <span className="text-muted-foreground">{reply.content}</span>
-                  </p>
+                <div className="bg-muted border border-border rounded-lg p-2">
+                  <p className="text-xs font-semibold text-foreground">{reply.user.display_name || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">{reply.content}</p>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
                   <span>{formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}</span>
@@ -241,8 +230,8 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
             </div>
           ))}
 
-          {/* Add reply */}
-          <div className="flex gap-2 pt-2 border-t border-white/10">
+          {/* Add reply input */}
+          <div className="flex gap-2 pt-2 border-t border-border">
             <Input
               placeholder="Reply..."
               value={newReply}
@@ -253,13 +242,13 @@ export function PhotoComment({ comment, userId, onDelete, onReplyAdded }: PhotoC
                   handleAddReply()
                 }
               }}
-              className="text-xs bg-white/5 border-white/10 text-white placeholder:text-muted-foreground h-8"
+              className="text-xs h-8"
             />
             <Button
               size="sm"
               onClick={handleAddReply}
               disabled={!newReply.trim() || isSubmitting}
-              className="flex-shrink-0 bg-primary hover:bg-primary/90 h-8"
+              className="flex-shrink-0 h-8"
             >
               <Send className="w-3 h-3" />
             </Button>
