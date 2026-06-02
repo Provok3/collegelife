@@ -69,17 +69,61 @@ function buildPhotoSelect(ownerJoin: string, commentFields: string) {
 
 type PhotoRow = Record<string, unknown>
 
-function normalizePhoto(photo: PhotoRow) {
-  const comments =
-    (photo.comments as Array<Record<string, unknown>> | null | undefined) ?? []
-  return {
-    ...photo,
-    comments: comments.map((comment) => ({
-      ...comment,
-      parent_id: (comment.parent_id as string | null | undefined) ?? null,
-      reactions: (comment.reactions as unknown[] | undefined) ?? [],
-    })),
+interface RawComment {
+  id: string
+  content: string
+  created_at: string
+  parent_id?: string | null
+  user?: unknown
+  reactions?: unknown[] | null
+}
+
+/** Supabase types to-one embeds as arrays; coerce to a single profile. */
+function coerceUser(user: unknown): ProfileRef {
+  const value = Array.isArray(user) ? user[0] : user
+  return (value as ProfileRef | undefined) ?? {
+    id: '',
+    display_name: null,
+    avatar_url: null,
   }
+}
+
+const byCreatedAsc = (a: RawComment, b: RawComment) =>
+  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+
+function normalizePhoto(photo: PhotoRow) {
+  const raw = (photo.comments as RawComment[] | null | undefined) ?? []
+
+  // Replies are photo_comments rows with parent_id set. Group them by parent so
+  // they render nested under their comment instead of as top-level comments.
+  const repliesByParent = new Map<string, RawComment[]>()
+  for (const c of raw) {
+    if (c.parent_id) {
+      const list = repliesByParent.get(c.parent_id) ?? []
+      list.push(c)
+      repliesByParent.set(c.parent_id, list)
+    }
+  }
+
+  const comments = raw
+    .filter((c) => !c.parent_id)
+    .sort(byCreatedAsc)
+    .map((c) => ({
+      id: c.id,
+      content: c.content,
+      created_at: c.created_at,
+      parent_id: null,
+      user: coerceUser(c.user),
+      reactions: (c.reactions as unknown[] | undefined) ?? [],
+      replies: (repliesByParent.get(c.id) ?? []).sort(byCreatedAsc).map((r) => ({
+        id: r.id,
+        content: r.content,
+        created_at: r.created_at,
+        user: coerceUser(r.user),
+      })),
+    }))
+
+  return { ...photo, comments }
 }
 
 /**
