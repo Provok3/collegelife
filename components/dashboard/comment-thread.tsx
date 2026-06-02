@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Heart, ThumbsUp, Star, Smile, ChevronDown, ChevronUp, Trash2, Send } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
-interface CommentReply {
+export interface CommentReply {
   id: string
   content: string
   created_at: string
@@ -25,7 +24,7 @@ interface CommentReaction {
   user_id: string
 }
 
-interface Comment {
+export interface ThreadComment {
   id: string
   content: string
   created_at: string
@@ -38,9 +37,14 @@ interface Comment {
   reactions?: CommentReaction[]
 }
 
-interface PhotoCommentProps {
-  comment: Comment
-  photoId: string
+interface CommentThreadProps {
+  comment: ThreadComment
+  /** id of the post the comment belongs to (photo or status) */
+  parentId: string
+  /** request body key for the parent post id */
+  parentField: 'photoId' | 'statusId'
+  /** API base, e.g. '/api/photos/comments' or '/api/status/comments' */
+  apiBase: string
   userId: string
   onDelete?: (commentId: string) => void
   onReplyAdded?: (reply: CommentReply) => void
@@ -53,26 +57,33 @@ const EMOJI_OPTIONS = [
   { emoji: 'smile', icon: Smile, label: 'Smile' },
 ]
 
-export function PhotoComment({ comment, photoId, userId, onDelete, onReplyAdded }: PhotoCommentProps) {
+export function CommentThread({
+  comment,
+  parentId,
+  parentField,
+  apiBase,
+  userId,
+  onDelete,
+  onReplyAdded,
+}: CommentThreadProps) {
   const [showReplies, setShowReplies] = useState(false)
   const [replies, setReplies] = useState<CommentReply[]>(comment.replies || [])
   const [reactions, setReactions] = useState<CommentReaction[]>(comment.reactions || [])
   const [newReply, setNewReply] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient()
 
   const handleToggleReaction = async (emoji: string) => {
     const existingReaction = reactions.find(r => r.user_id === userId && r.emoji === emoji)
 
     if (existingReaction) {
-      await fetch('/api/photos/comments/reactions', {
+      await fetch(`${apiBase}/reactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId: comment.id, emoji }),
       })
       setReactions(reactions.filter(r => r.id !== existingReaction.id))
     } else {
-      const response = await fetch('/api/photos/comments/reactions', {
+      const response = await fetch(`${apiBase}/reactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commentId: comment.id, emoji }),
@@ -88,10 +99,10 @@ export function PhotoComment({ comment, photoId, userId, onDelete, onReplyAdded 
     if (!newReply.trim()) return
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/photos/comments/replies', {
+      const response = await fetch(`${apiBase}/replies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId: comment.id, photoId, content: newReply.trim() }),
+        body: JSON.stringify({ commentId: comment.id, [parentField]: parentId, content: newReply.trim() }),
       })
       if (response.ok) {
         const reply = await response.json()
@@ -106,7 +117,7 @@ export function PhotoComment({ comment, photoId, userId, onDelete, onReplyAdded 
 
   const handleDeleteReply = async (replyId: string) => {
     if (!confirm('Delete this reply?')) return
-    const response = await fetch(`/api/photos/comments/replies?id=${replyId}`, {
+    const response = await fetch(`${apiBase}/replies?id=${replyId}`, {
       method: 'DELETE',
     })
     if (response.ok) {
