@@ -107,7 +107,7 @@ export function ScheduleForm({ userId }: ScheduleFormProps) {
           Add Event
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
@@ -135,7 +135,7 @@ export function ScheduleForm({ userId }: ScheduleFormProps) {
               <SelectTrigger id="type">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[60] bg-popover text-popover-foreground">
                 {ITEM_TYPES.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}

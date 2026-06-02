@@ -191,29 +191,29 @@ export default async function DashboardPage() {
         <div className="grid md:grid-cols-3 gap-4">
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-muted-foreground text-sm font-medium">Connected</p>
+              <p className="text-slate-300 text-sm font-medium">Connected</p>
               <Users className="w-4 h-4 text-primary" />
             </div>
             <p className="text-3xl font-black text-white">{connectionCount}</p>
-            <p className="text-xs text-muted-foreground mt-2">people staying connected</p>
+            <p className="text-xs text-slate-400 mt-2">people staying connected</p>
           </div>
 
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-muted-foreground text-sm font-medium">Shared</p>
+              <p className="text-slate-300 text-sm font-medium">Shared</p>
               <Camera className="w-4 h-4 text-secondary" />
             </div>
             <p className="text-3xl font-black text-white">{recentPhotos.length}</p>
-            <p className="text-xs text-muted-foreground mt-2">photos and stories</p>
+            <p className="text-xs text-slate-400 mt-2">photos and stories</p>
           </div>
 
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl p-6 backdrop-blur-xl hover:border-white/20 transition-smooth">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-muted-foreground text-sm font-medium">Upcoming</p>
+              <p className="text-slate-300 text-sm font-medium">Upcoming</p>
               <Calendar className="w-4 h-4 text-accent" />
             </div>
             <p className="text-3xl font-black text-white">{upcomingSchedule.length}</p>
-            <p className="text-xs text-muted-foreground mt-2">events coming up</p>
+            <p className="text-xs text-slate-400 mt-2">events coming up</p>
           </div>
         </div>
       )}
@@ -235,11 +235,11 @@ export default async function DashboardPage() {
           <p className="text-xl text-white leading-relaxed">{recentStatus.content}</p>
           {recentStatus.studying_for && (
             <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-sm text-muted-foreground">Currently studying:</p>
-              <p className="text-lg font-semibold text-accent mt-1">{recentStatus.studying_for}</p>
+              <p className="text-sm text-white/70">Currently studying:</p>
+              <p className="text-lg font-semibold text-white mt-1">{recentStatus.studying_for}</p>
             </div>
           )}
-          <p className="text-xs text-muted-foreground mt-4">
+          <p className="text-xs text-white/70 mt-4">
             {formatDistanceToNow(new Date(recentStatus.created_at), { addSuffix: true })}
           </p>
         </div>

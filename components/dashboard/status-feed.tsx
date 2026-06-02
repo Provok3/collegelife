@@ -59,11 +59,11 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
 
   if (statuses.length === 0) {
     return (
-      <Card>
+      <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-white/10 text-white shadow-none">
         <CardContent className="py-12 text-center">
-          <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Status Updates</h3>
-          <p className="text-muted-foreground">
+          <MessageCircle className="w-12 h-12 mx-auto text-white/50 mb-4" />
+          <h3 className="text-lg font-semibold mb-2 text-white">No Status Updates</h3>
+          <p className="text-white/70">
             {isOwner 
               ? 'Share your first status update with your family!' 
               : 'No updates yet. Check back soon!'}
@@ -79,7 +79,10 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
         const moodStyle = status.mood ? MOOD_STYLES[status.mood] : null
 
         return (
-          <Card key={status.id}>
+          <Card
+            key={status.id}
+            className="bg-gradient-to-br from-slate-800 to-slate-900 border-white/10 text-white shadow-none"
+          >
             <CardContent className="pt-6">
               <div className="flex gap-4">
                 {/* Avatar for viewers */}
@@ -97,7 +100,7 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       {!isOwner && status.owner && (
-                        <span className="font-semibold">{status.owner.display_name}</span>
+                        <span className="font-semibold text-white">{status.owner.display_name}</span>
                       )}
                       {moodStyle && (
                         <Badge variant="secondary" className={`${moodStyle.bg} ${moodStyle.text} capitalize`}>
@@ -109,7 +112,7 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-white/60 hover:text-destructive hover:bg-white/10"
                         onClick={() => handleDelete(status.id)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -118,18 +121,21 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
                   </div>
 
                   {/* Content */}
-                  <p className="text-foreground whitespace-pre-wrap">{status.content}</p>
+                  <p className="text-white whitespace-pre-wrap">{status.content}</p>
 
                   {/* Studying for */}
                   {status.studying_for && (
-                    <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                      <BookOpen className="w-4 h-4" />
-                      <span>Studying for: <span className="font-medium text-foreground">{status.studying_for}</span></span>
+                    <div className="flex items-center gap-2 mt-3 text-sm text-white/80">
+                      <BookOpen className="w-4 h-4 shrink-0" />
+                      <span>
+                        Studying for:{' '}
+                        <span className="font-medium text-white">{status.studying_for}</span>
+                      </span>
                     </div>
                   )}
 
                   {/* Timestamp */}
-                  <p className="text-xs text-muted-foreground mt-3">
+                  <p className="text-xs text-white/70 mt-3">
                     {formatDistanceToNow(new Date(status.created_at), { addSuffix: true })}
                   </p>
                 </div>

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function LandingPage() {
@@ -57,11 +58,20 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           {/* Navigation */}
           <nav className="flex justify-between items-center mb-24 animate-slide-in">
-            <h1 className="text-3xl font-black text-white">
-              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                CollegeLife
-              </span>
-            </h1>
+            <div className="flex items-center gap-3">
+              <Image 
+                src="/logo.png" 
+                alt="CollegeLife Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
+              <h1 className="text-3xl font-black text-white">
+                <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                  CollegeLife
+                </span>
+              </h1>
+            </div>
             <button
               onClick={handleGoogleLogin}
               disabled={isSigningIn}
