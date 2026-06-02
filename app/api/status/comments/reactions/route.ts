@@ -18,6 +18,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Authorization: only react to a comment on a status you can see. The
+    // status_comments SELECT policy returns the row only when the status is
+    // visible to this user, so a null result means it's out of scope.
+    const { data: parentComment } = await supabase
+      .from('status_comments')
+      .select('id')
+      .eq('id', commentId)
+      .single()
+
+    if (!parentComment) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Toggle reaction
     const { data: existingReaction } = await supabase
       .from('status_comment_reactions')
