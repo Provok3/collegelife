@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera, MessageCircle, Trash2, Send, Heart, ThumbsUp, Star, Smile, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { cn } from '@/lib/utils'
 import { PhotoComment } from './photo-comment'
 
 interface Photo {
@@ -66,12 +67,23 @@ const EMOJI_OPTIONS = [
 ]
 
 export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGalleryProps) {
+  const searchParams = useSearchParams()
+  const focusPhoto = searchParams.get('photo')
   const [photos, setPhotos] = useState(initialPhotos)
-  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null)
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(focusPhoto)
   const [newComment, setNewComment] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  // When arriving via a notification deep link (?photo=<id>), expand and scroll
+  // to that photo.
+  useEffect(() => {
+    if (!focusPhoto) return
+    setExpandedPhoto(focusPhoto)
+    const el = document.getElementById(`photo-${focusPhoto}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusPhoto])
 
   const handleDelete = async (photoId: string) => {
     if (!confirm('Are you sure you want to delete this photo?')) return
@@ -190,7 +202,11 @@ export function PhotoGallery({ photos: initialPhotos, userId, isOwner }: PhotoGa
         return (
           <div
             key={photo.id}
-            className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-smooth hover:shadow-xl hover:shadow-primary/10"
+            id={`photo-${photo.id}`}
+            className={cn(
+              'group bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl hover:border-white/20 transition-smooth hover:shadow-xl hover:shadow-primary/10',
+              focusPhoto === photo.id && 'ring-2 ring-primary/70 scroll-mt-24',
+            )}
           >
             {/* Image */}
             <div className="relative aspect-square overflow-hidden bg-muted">

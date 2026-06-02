@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DashboardNav } from '@/components/dashboard/nav'
+import { NotificationsProvider } from '@/components/dashboard/notifications-provider'
+import { NotificationBell } from '@/components/dashboard/notification-bell'
+import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardLayout({
   children,
@@ -38,18 +41,25 @@ export default async function DashboardLayout({
   const connectedOwners = viewerConnections?.map(c => c.owner_id) || []
 
   return (
-    <div className="min-h-screen flex">
-      <DashboardNav 
-        user={user} 
-        profile={profile} 
-        isOwner={isOwner || false}
-        connectedOwners={connectedOwners}
-      />
-      <main className="flex-1 lg:ml-64">
-        <div className="p-4 lg:p-8">
-          {children}
-        </div>
-      </main>
-    </div>
+    <NotificationsProvider userId={user.id}>
+      <div className="min-h-screen flex">
+        <DashboardNav
+          user={user}
+          profile={profile}
+          isOwner={isOwner || false}
+          connectedOwners={connectedOwners}
+        />
+        <main className="flex-1 lg:ml-64">
+          {/* Desktop top bar */}
+          <header className="sticky top-0 z-30 hidden h-16 items-center justify-end gap-2 border-b bg-background/80 px-8 backdrop-blur lg:flex">
+            <NotificationBell />
+          </header>
+          <div className="p-4 lg:p-8">
+            {children}
+          </div>
+        </main>
+      </div>
+      <Toaster />
+    </NotificationsProvider>
   )
 }
