@@ -45,9 +45,9 @@ export default async function StatusPage() {
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
-        <h1 className="text-3xl font-bold text-white">Status Updates</h1>
-        <p className="text-white/70 mt-1">
-          {isOwner ? 'Share what you&apos;re up to' : 'See how your student is doing'}
+        <h1 className="text-3xl font-bold">Status Updates</h1>
+        <p className="text-muted-foreground mt-1">
+          {isOwner ? "Share what you're up to" : 'See how your student is doing'}
         </p>
       </div>
 
