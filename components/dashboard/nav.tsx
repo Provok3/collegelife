@@ -4,11 +4,11 @@ import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { BrandLogo } from '@/components/brand-logo'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { 
-  GraduationCap, 
   Camera, 
   MessageCircle, 
   Calendar, 
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { NotificationBell } from '@/components/dashboard/notification-bell'
 
 interface Profile {
   id: string
@@ -73,7 +74,11 @@ export function DashboardNav({ user, profile, isOwner, connectedOwners }: Dashbo
       {/* Header */}
       <div className="p-4 border-b">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
+          <BrandLogo
+            width={28}
+            height={28}
+            className="w-7 h-7"
+          />
           <span className="font-bold text-lg">CollegeLife</span>
         </Link>
       </div>
@@ -137,19 +142,26 @@ export function DashboardNav({ user, profile, isOwner, connectedOwners }: Dashbo
       {/* Mobile Nav */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
+          <BrandLogo
+            width={28}
+            height={28}
+            className="w-7 h-7"
+          />
           <span className="font-bold">CollegeLife</span>
         </Link>
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <NavContent />
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64">
+              <NavContent />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       <div className="lg:hidden h-16" /> {/* Spacer for mobile */}
 

@@ -1,30 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MessageCircle, Trash2, BookOpen } from 'lucide-react'
+import { MessageCircle, Trash2, BookOpen, Send } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-
-interface Status {
-  id: string
-  owner_id: string
-  content: string
-  mood: string | null
-  studying_for: string | null
-  created_at: string
-  owner?: {
-    display_name: string | null
-    avatar_url: string | null
-  }
-}
+import { CommentThread } from './comment-thread'
+import type { FeedStatus } from '@/lib/status/fetch-statuses'
 
 interface StatusFeedProps {
-  statuses: Status[]
+  statuses: FeedStatus[]
   userId: string
   isOwner: boolean
 }
@@ -40,8 +29,16 @@ const MOOD_STYLES: Record<string, { bg: string; text: string }> = {
 
 export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: StatusFeedProps) {
   const [statuses, setStatuses] = useState(initialStatuses)
-  const router = useRouter()
+  const [expandedStatus, setExpandedStatus] = useState<string | null>(null)
+  const [newComment, setNewComment] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
+
+  // Keep the feed in sync with refreshed server data — e.g. after posting a
+  // new update, router.refresh() re-fetches and the new status arrives here.
+  useEffect(() => {
+    setStatuses(initialStatuses)
+  }, [initialStatuses])
 
   const handleDelete = async (statusId: string) => {
     if (!confirm('Are you sure you want to delete this status?')) return
@@ -57,6 +54,56 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
     }
   }
 
+  const handleAddComment = async (statusId: string) => {
+    if (!newComment.trim()) return
+    setIsSubmitting(true)
+
+    const { data, error } = await supabase
+      .from('status_comments')
+      .insert({
+        status_id: statusId,
+        user_id: userId,
+        content: newComment.trim(),
+      })
+      .select(`
+        id,
+        content,
+        created_at,
+        user:profiles!status_comments_user_id_fkey(id, display_name, avatar_url)
+      `)
+      .single()
+
+    if (!error && data) {
+      // Supabase infers the to-one `user` embed as an array; coerce it.
+      const comment = data as unknown as FeedStatus['comments'][number]
+      setStatuses(statuses.map(s => {
+        if (s.id === statusId) {
+          return { ...s, comments: [...s.comments, comment] }
+        }
+        return s
+      }))
+      setNewComment('')
+    }
+    setIsSubmitting(false)
+  }
+
+  const handleDeleteComment = async (statusId: string, commentId: string) => {
+    if (!confirm('Delete this comment? Its replies and reactions will be removed too.')) return
+
+    const response = await fetch(`/api/status/comments?id=${commentId}`, {
+      method: 'DELETE',
+    })
+
+    if (response.ok) {
+      setStatuses(statuses.map(s => {
+        if (s.id === statusId) {
+          return { ...s, comments: s.comments.filter(c => c.id !== commentId) }
+        }
+        return s
+      }))
+    }
+  }
+
   if (statuses.length === 0) {
     return (
       <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-white/10 text-white shadow-none">
@@ -64,8 +111,8 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
           <MessageCircle className="w-12 h-12 mx-auto text-white/50 mb-4" />
           <h3 className="text-lg font-semibold mb-2 text-white">No Status Updates</h3>
           <p className="text-white/70">
-            {isOwner 
-              ? 'Share your first status update with your family!' 
+            {isOwner
+              ? 'Share your first status update with your family!'
               : 'No updates yet. Check back soon!'}
           </p>
         </CardContent>
@@ -77,6 +124,7 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
     <div className="space-y-4">
       {statuses.map((status) => {
         const moodStyle = status.mood ? MOOD_STYLES[status.mood] : null
+        const isExpanded = expandedStatus === status.id
 
         return (
           <Card
@@ -138,6 +186,57 @@ export function StatusFeed({ statuses: initialStatuses, userId, isOwner }: Statu
                   <p className="text-xs text-white/70 mt-3">
                     {formatDistanceToNow(new Date(status.created_at), { addSuffix: true })}
                   </p>
+
+                  {/* Comments */}
+                  <div className="mt-4 pt-3 border-t border-white/10 space-y-3">
+                    <button
+                      onClick={() => setExpandedStatus(isExpanded ? null : status.id)}
+                      className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      {status.comments.length} comment{status.comments.length !== 1 ? 's' : ''}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="space-y-3">
+                        {status.comments.map((comment) => (
+                          <CommentThread
+                            key={comment.id}
+                            comment={comment}
+                            parentId={status.id}
+                            parentField="statusId"
+                            apiBase="/api/status/comments"
+                            userId={userId}
+                            onDelete={(commentId) => handleDeleteComment(status.id, commentId)}
+                          />
+                        ))}
+
+                        {/* Add comment */}
+                        <div className="flex gap-2 pt-2 border-t border-white/10">
+                          <Input
+                            placeholder="Say something..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleAddComment(status.id)
+                              }
+                            }}
+                            className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                          />
+                          <Button
+                            size="icon"
+                            onClick={() => handleAddComment(status.id)}
+                            disabled={!newComment.trim() || isSubmitting}
+                            className="flex-shrink-0"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
