@@ -1,47 +1,53 @@
-import { put } from '@vercel/blob'
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { createClient } from '@/lib/supabase/server'
+import {
+  ALLOWED_PHOTO_CONTENT_TYPES,
+  MAX_PHOTO_SIZE_BYTES,
+} from '@/lib/photos/constants'
 import { type NextRequest, NextResponse } from 'next/server'
 
+// Generates short-lived, scoped tokens so the browser can upload photos
+// directly to Vercel Blob. The DB row is created afterwards by
+// /api/photos/confirm. The blob stays private; it's served via /api/photos/file.
 export async function POST(request: NextRequest) {
+  const body = (await request.json()) as HandleUploadBody
+
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname) => {
+        const supabase = await createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const caption = formData.get('caption') as string | null
+        if (!user) {
+          throw new Error('Unauthorized')
+        }
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-    }
+        // Lock each user into their own prefix so a token can't be used to
+        // write into someone else's namespace.
+        if (!pathname.startsWith(`photos/${user.id}/`)) {
+          throw new Error('Invalid upload path')
+        }
 
-    // Upload to Vercel Blob (private)
-    const blob = await put(`photos/${user.id}/${Date.now()}-${file.name}`, file, {
-      access: 'private',
+        return {
+          allowedContentTypes: ALLOWED_PHOTO_CONTENT_TYPES,
+          maximumSizeInBytes: MAX_PHOTO_SIZE_BYTES,
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({ userId: user.id }),
+        }
+      },
+      // The DB write happens in /api/photos/confirm so uploads also work in
+      // local dev, where Vercel can't reach this webhook on localhost.
+      onUploadCompleted: async () => {},
     })
 
-    // Save to database
-    const { data: photo, error } = await supabase
-      .from('photos')
-      .insert({
-        owner_id: user.id,
-        blob_pathname: blob.pathname,
-        caption: caption || null,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: 'Failed to save photo' }, { status: 500 })
-    }
-
-    return NextResponse.json({ photo, pathname: blob.pathname })
+    return NextResponse.json(jsonResponse)
   } catch (error) {
-    console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Upload failed'
+    const status = message === 'Unauthorized' ? 401 : 400
+    return NextResponse.json({ error: message }, { status })
   }
 }
