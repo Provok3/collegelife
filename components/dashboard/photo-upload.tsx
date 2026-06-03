@@ -13,7 +13,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
 import { Camera, Upload, X } from 'lucide-react'
+import { upload } from '@vercel/blob/client'
+import { createClient } from '@/lib/supabase/client'
+import {
+  MAX_PHOTO_SIZE_BYTES,
+  MAX_PHOTO_SIZE_LABEL,
+  PHOTO_MULTIPART_THRESHOLD_BYTES,
+} from '@/lib/photos/constants'
 
 export function PhotoUpload() {
   const [open, setOpen] = useState(false)
@@ -21,12 +29,24 @@ export function PhotoUpload() {
   const [preview, setPreview] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
+      if (selectedFile.size > MAX_PHOTO_SIZE_BYTES) {
+        setError(`Photo is too large. Maximum size is ${MAX_PHOTO_SIZE_LABEL}.`)
+        setFile(null)
+        setPreview(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        return
+      }
+      setError(null)
       setFile(selectedFile)
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -38,16 +58,37 @@ export function PhotoUpload() {
 
   const handleUpload = async () => {
     if (!file) return
-    
+
     setIsUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    if (caption) formData.append('caption', caption)
+    setProgress(0)
+    setError(null)
 
     try {
-      const response = await fetch('/api/photos/upload', {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setError('You must be signed in to upload a photo.')
+        return
+      }
+
+      // Upload straight from the browser to Vercel Blob, bypassing the
+      // serverless request-body limit. /api/photos/upload only mints a token.
+      const blob = await upload(`photos/${user.id}/${file.name}`, file, {
+        access: 'private',
+        handleUploadUrl: '/api/photos/upload',
+        contentType: file.type || undefined,
+        multipart: file.size > PHOTO_MULTIPART_THRESHOLD_BYTES,
+        onUploadProgress: (event) => setProgress(event.percentage),
+      })
+
+      // Record the photo in the database now that the blob exists.
+      const response = await fetch('/api/photos/confirm', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pathname: blob.pathname, caption }),
       })
 
       if (response.ok) {
@@ -63,16 +104,29 @@ export function PhotoUpload() {
           router.push(`/dashboard/photos?photo=${photo.id}`)
         }
       }
+
+      setOpen(false)
+      setFile(null)
+      setPreview(null)
+      setCaption('')
+      router.refresh()
     } catch (error) {
       console.error('Upload failed:', error)
+      setError(
+        error instanceof Error && /too large|maximum/i.test(error.message)
+          ? `Photo is too large. Maximum size is ${MAX_PHOTO_SIZE_LABEL}.`
+          : 'Upload failed. Please check your connection and try again.',
+      )
     } finally {
       setIsUploading(false)
+      setProgress(0)
     }
   }
 
   const clearSelection = () => {
     setFile(null)
     setPreview(null)
+    setError(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -139,12 +193,27 @@ export function PhotoUpload() {
             />
           </div>
 
-          <Button 
-            onClick={handleUpload} 
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+
+          {isUploading && (
+            <div className="space-y-1">
+              <Progress value={progress} />
+              <p className="text-xs text-muted-foreground text-right">
+                {Math.round(progress)}%
+              </p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleUpload}
             disabled={!file || isUploading}
             className="w-full"
           >
-            {isUploading ? 'Uploading...' : 'Upload Photo'}
+            {isUploading ? `Uploading… ${Math.round(progress)}%` : 'Upload Photo'}
           </Button>
         </div>
       </DialogContent>
