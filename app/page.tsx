@@ -2,8 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { BrandLogo } from '@/components/brand-logo';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -59,9 +59,7 @@ export default function LandingPage() {
           {/* Navigation */}
           <nav className="flex justify-between items-center mb-24 animate-slide-in">
             <div className="flex items-center gap-3">
-              <Image 
-                src="/logo.png" 
-                alt="CollegeLife Logo"
+              <BrandLogo
                 width={40}
                 height={40}
                 className="w-10 h-10"
