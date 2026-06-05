@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
-import { ScheduleForm } from '@/components/dashboard/schedule-form'
 
 export default async function SchedulePage() {
   const supabase = await createClient()
@@ -26,6 +25,7 @@ export default async function SchedulePage() {
 
   // Get schedule items based on role
   let scheduleItems = []
+  let calendarSources = []
   
   if (isOwner) {
     const { data } = await supabase
@@ -34,6 +34,13 @@ export default async function SchedulePage() {
       .eq('owner_id', user.id)
       .order('start_date', { ascending: true })
     scheduleItems = data || []
+
+    const { data: sources } = await supabase
+      .from('calendar_sources')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+    calendarSources = sources || []
   } else {
     // Get from connected owners
     const { data: connections } = await supabase
@@ -61,13 +68,17 @@ export default async function SchedulePage() {
         <div>
           <h1 className="text-3xl font-bold">Schedule</h1>
           <p className="text-muted-foreground mt-1">
-            {isOwner ? 'Manage your study schedule' : 'View upcoming tests and assignments'}
+            {isOwner ? 'Manage classes, work, studying, and social plans' : 'View upcoming events'}
           </p>
         </div>
-        {isOwner && <ScheduleForm userId={user.id} />}
       </div>
 
-      <ScheduleCalendar items={scheduleItems} userId={user.id} isOwner={isOwner} />
+      <ScheduleCalendar
+        items={scheduleItems}
+        sources={calendarSources}
+        userId={user.id}
+        isOwner={isOwner}
+      />
     </div>
   )
 }
