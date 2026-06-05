@@ -62,6 +62,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 
 type ScheduleItemType = 'class' | 'study' | 'test' | 'assignment' | 'work' | 'social' | 'other'
 type CalendarSourceType = 'ical_file' | 'ical_url' | 'google' | 'office365'
@@ -137,6 +139,100 @@ const REMINDER_OPTIONS = [
 ]
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// 15-minute increments across the day, e.g. { value: '09:15', label: '9:15 AM' }
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
+  const hours = Math.floor(index / 4)
+  const minutes = (index % 4) * 15
+  const value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  return { value, label: format(new Date(`2000-01-01T${value}:00`), 'h:mm a') }
+})
+
+function DatePickerField({
+  id,
+  value,
+  placeholder,
+  onSelect,
+  invalid,
+  required,
+}: {
+  id: string
+  value: string
+  placeholder: string
+  onSelect: (value: string) => void
+  invalid?: boolean
+  required?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = value ? new Date(`${value}T00:00:00`) : undefined
+  const hasValidDate = selected && !Number.isNaN(selected.getTime())
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          aria-invalid={invalid}
+          aria-required={required}
+          className="w-full justify-start text-left font-normal"
+        >
+          <CalendarDays className="mr-2 size-4 text-muted-foreground" />
+          {hasValidDate ? (
+            format(selected, 'EEE, MMM d, yyyy')
+          ) : (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={hasValidDate ? selected : undefined}
+          defaultMonth={hasValidDate ? selected : undefined}
+          onSelect={(date) => {
+            if (date) {
+              onSelect(toDateInputValue(date))
+              setOpen(false)
+            }
+          }}
+          autoFocus
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function TimePickerField({
+  id,
+  value,
+  onSelect,
+  invalid,
+}: {
+  id: string
+  value: string
+  onSelect: (value: string) => void
+  invalid?: boolean
+}) {
+  return (
+    <Select value={value} onValueChange={onSelect}>
+      <SelectTrigger id={id} aria-invalid={invalid} className="w-full">
+        <span className="flex items-center gap-2">
+          <Clock className="size-4 text-muted-foreground" />
+          <SelectValue placeholder="Pick a time" />
+        </span>
+      </SelectTrigger>
+      <SelectContent className="max-h-72">
+        {TIME_OPTIONS.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 function typeConfig(type: ScheduleItemType) {
   return ITEM_TYPES.find((itemType) => itemType.value === type) ?? ITEM_TYPES[ITEM_TYPES.length - 1]
@@ -790,48 +886,39 @@ export function ScheduleCalendar({
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="start-date">Starts</Label>
-                <Input
+                <DatePickerField
                   id="start-date"
-                  type="date"
                   value={startDate}
-                  onChange={(event) => {
-                    const nextStartDate = event.target.value
+                  placeholder="Pick a start date"
+                  required
+                  onSelect={(nextStartDate) => {
                     setStartDate(nextStartDate)
                     if (endDate && nextStartDate && endDate < nextStartDate) {
                       setEndDate(nextStartDate)
                     }
                   }}
-                  required
                 />
               </div>
               {!allDay && (
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="start-time">Time</Label>
-                  <Input id="start-time" type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+                  <TimePickerField id="start-time" value={startTime} onSelect={setStartTime} />
                 </div>
               )}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="end-date">Ends</Label>
-                <Input
+                <DatePickerField
                   id="end-date"
-                  type="date"
                   value={endDate}
-                  aria-invalid={eventEndBeforeStart}
-                  aria-describedby={eventEndBeforeStart ? 'event-date-error' : undefined}
-                  onChange={(event) => setEndDate(event.target.value)}
+                  placeholder="Pick an end date"
+                  invalid={eventEndBeforeStart}
+                  onSelect={setEndDate}
                 />
               </div>
               {!allDay && (
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="end-time">Time</Label>
-                  <Input
-                    id="end-time"
-                    type="time"
-                    value={endTime}
-                    aria-invalid={eventEndBeforeStart}
-                    aria-describedby={eventEndBeforeStart ? 'event-date-error' : undefined}
-                    onChange={(event) => setEndTime(event.target.value)}
-                  />
+                  <TimePickerField id="end-time" value={endTime} onSelect={setEndTime} invalid={eventEndBeforeStart} />
                 </div>
               )}
             </div>
