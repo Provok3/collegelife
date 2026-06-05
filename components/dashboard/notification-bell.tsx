@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Check, CheckCheck } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,8 @@ import { useNotifications } from './notifications-provider'
 import { describeNotification, type AppNotification } from '@/lib/notifications'
 
 export function NotificationBell({ className }: { className?: string }) {
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications()
+  const { notifications, unreadCount, clearUnreadNotifications } =
+    useNotifications()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'all' | 'unread'>('all')
   const router = useRouter()
@@ -36,14 +37,23 @@ export function NotificationBell({ className }: { className?: string }) {
     [notifications, tab],
   )
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (nextOpen) {
+      setTab('all')
+      if (unreadCount > 0) {
+        clearUnreadNotifications()
+      }
+    }
+  }
+
   const handleOpen = (n: AppNotification) => {
-    markRead(n.id)
     setOpen(false)
     router.push(describeNotification(n).href)
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -73,16 +83,6 @@ export function NotificationBell({ className }: { className?: string }) {
       >
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
           <p className="text-sm font-semibold">Notifications</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
-            onClick={markAllRead}
-            disabled={unreadCount === 0}
-          >
-            <CheckCheck className="h-3.5 w-3.5" />
-            Mark all read
-          </Button>
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as 'all' | 'unread')}>
@@ -119,7 +119,6 @@ export function NotificationBell({ className }: { className?: string }) {
                     key={n.id}
                     notification={n}
                     onOpen={() => handleOpen(n)}
-                    onMarkRead={() => markRead(n.id)}
                   />
                 ))}
               </ul>
@@ -134,11 +133,9 @@ export function NotificationBell({ className }: { className?: string }) {
 function NotificationRow({
   notification,
   onOpen,
-  onMarkRead,
 }: {
   notification: AppNotification
   onOpen: () => void
-  onMarkRead: () => void
 }) {
   const { icon: Icon, title, detail } = describeNotification(notification)
   const unread = !notification.read_at
@@ -182,17 +179,6 @@ function NotificationRow({
           </p>
         </div>
       </button>
-
-      {unread && (
-        <button
-          type="button"
-          onClick={onMarkRead}
-          aria-label="Mark as read"
-          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-        >
-          <Check className="h-3.5 w-3.5" />
-        </button>
-      )}
       {unread && (
         <span className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-primary group-hover:opacity-0" />
       )}
