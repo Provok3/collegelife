@@ -36,7 +36,6 @@ import {
   PartyPopper,
   RefreshCw,
   Trash2,
-  Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -613,10 +612,6 @@ export function ScheduleCalendar({
 
           {isOwner && (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-                <Upload className="h-4 w-4" />
-                Import
-              </Button>
               <Button onClick={() => openCreateDialog(new Date())}>
                 <CalendarDays className="h-4 w-4" />
                 New event
