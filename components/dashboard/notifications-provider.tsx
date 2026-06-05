@@ -17,8 +17,7 @@ interface NotificationsContextValue {
   notifications: AppNotification[]
   unreadCount: number
   loading: boolean
-  markRead: (id: string) => void
-  markAllRead: () => void
+  clearUnreadNotifications: () => void
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null)
@@ -137,26 +136,7 @@ export function NotificationsProvider({
     }
   }, [supabase, userId])
 
-  const markRead = useCallback(
-    (id: string) => {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id && !n.read_at
-            ? { ...n, read_at: new Date().toISOString() }
-            : n,
-        ),
-      )
-      supabase
-        .from('notifications')
-        .update({ read_at: new Date().toISOString() })
-        .eq('id', id)
-        .is('read_at', null)
-        .then(() => {})
-    },
-    [supabase],
-  )
-
-  const markAllRead = useCallback(() => {
+  const clearUnreadNotifications = useCallback(() => {
     const now = new Date().toISOString()
     setNotifications((prev) =>
       prev.map((n) => (n.read_at ? n : { ...n, read_at: now })),
@@ -175,8 +155,13 @@ export function NotificationsProvider({
   )
 
   const value = useMemo<NotificationsContextValue>(
-    () => ({ notifications, unreadCount, loading, markRead, markAllRead }),
-    [notifications, unreadCount, loading, markRead, markAllRead],
+    () => ({
+      notifications,
+      unreadCount,
+      loading,
+      clearUnreadNotifications,
+    }),
+    [notifications, unreadCount, loading, clearUnreadNotifications],
   )
 
   return (
