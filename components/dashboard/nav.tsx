@@ -9,14 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { 
-  Camera, 
-  MessageCircle, 
-  Calendar, 
-  Users, 
-  Settings, 
+  Camera,
+  MessageCircle,
+  Calendar,
+  Users,
+  Settings,
   LogOut,
   Menu,
-  Home
+  Home,
+  DollarSign
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -41,6 +42,7 @@ const ownerNavItems = [
   { href: '/dashboard/photos', label: 'Photos', icon: Camera },
   { href: '/dashboard/status', label: 'Status', icon: MessageCircle },
   { href: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
+  { href: '/dashboard/budget', label: 'Budget', icon: DollarSign },
   { href: '/dashboard/invites', label: 'Invites', icon: Users },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
