@@ -2,6 +2,7 @@ import {
   Camera,
   Calendar,
   Heart,
+  HandCoins,
   MessageCircle,
   Reply,
   type LucideIcon,
@@ -18,6 +19,7 @@ export type NotificationType =
   | 'status_comment'
   | 'status_comment_reply'
   | 'status_comment_reaction'
+  | 'money_request'
 
 export interface AppNotification {
   id: string
@@ -36,6 +38,14 @@ export interface AppNotification {
     item_type?: string | null
     mood?: string | null
     emoji?: string | null
+    // money_request
+    amount?: number | null
+    note?: string | null
+    money_request_id?: string | null
+    venmo?: string | null
+    cashtag?: string | null
+    zelle?: string | null
+    apple_cash?: string | null
   } | null
   read_at: string | null
   created_at: string
@@ -51,6 +61,11 @@ const EMOJI_LABEL: Record<string, string> = {
   star: '⭐',
   smile: '😊',
 }
+
+const currency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
 
 export interface NotificationDescriptor {
   icon: LucideIcon
@@ -135,6 +150,16 @@ export function describeNotification(n: AppNotification): NotificationDescriptor
         title: `${actor} reacted ${emoji} to your comment`.trim(),
         href: '/dashboard/status',
       }
+    case 'money_request': {
+      const amountLabel =
+        typeof n.data?.amount === 'number' ? ` for ${currency.format(n.data.amount)}` : ''
+      return {
+        icon: HandCoins,
+        title: `${actor} asked${amountLabel}`,
+        detail: n.data?.note || undefined,
+        href: '/dashboard',
+      }
+    }
     default:
       return {
         icon: MessageCircle,

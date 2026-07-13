@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ThemeModeToggle } from '@/components/theme-mode-toggle'
 import { RedeemCodeForm } from '@/components/dashboard/redeem-code-form'
+import { PaymentHandlesForm, type PaymentHandles } from '@/components/dashboard/payment-handles-form'
 import { Users, UserPlus, Settings, Accessibility } from 'lucide-react'
 
 interface Profile {
@@ -29,6 +30,7 @@ interface SettingsClientProps {
   profile: Profile | null
   isOwner: boolean
   viewerConnections: ViewerConnection[]
+  paymentHandles: PaymentHandles | null
 }
 
 export function SettingsClient({
@@ -36,6 +38,7 @@ export function SettingsClient({
   profile,
   isOwner,
   viewerConnections,
+  paymentHandles,
 }: SettingsClientProps) {
   return (
     <Tabs defaultValue="general" className="space-y-6">
@@ -76,6 +79,10 @@ export function SettingsClient({
             </div>
           </CardContent>
         </Card>
+
+        {isOwner && (
+          <PaymentHandlesForm userId={user.id} handles={paymentHandles} />
+        )}
 
         {!isOwner && (
           <Card className="border-primary/20 bg-primary/5">
