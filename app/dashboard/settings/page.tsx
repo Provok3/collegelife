@@ -30,6 +30,14 @@ export default async function SettingsPage() {
 
   const isOwner = profile?.is_owner || (ownedConnections && ownedConnections.length > 0)
 
+  const { data: paymentHandles } = isOwner
+    ? await supabase
+        .from('payment_handles')
+        .select('venmo, cashtag, zelle, apple_cash')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+    : { data: null }
+
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
@@ -42,6 +50,7 @@ export default async function SettingsPage() {
         profile={profile}
         isOwner={isOwner || false}
         viewerConnections={viewerConnections || []}
+        paymentHandles={paymentHandles || null}
       />
     </div>
   )
